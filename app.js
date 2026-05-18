@@ -6,77 +6,68 @@ document.addEventListener('DOMContentLoaded', () => {
     // Hero Elements
     const heroVideo = document.getElementById('heroVideo');
     const heroTitle = document.getElementById('heroTitle');
-    const heroSubtitle = document.getElementById('heroSubtitle');
     const heroActionButtons = document.getElementById('heroActionButtons');
     const heroPlayBtn = document.getElementById('heroPlayBtn');
     const heroListBtn = document.getElementById('heroListBtn');
     
-    // Cinema Elements
+    // Cinema & Pause Overlay Elements
     const cinemaOverlay = document.getElementById('cinemaOverlay');
     const mainPlayer = document.getElementById('mainPlayer');
     const closeCinemaBtn = document.getElementById('closeCinemaBtn');
     const subtitleDropzone = document.getElementById('subtitleDropzone');
+    const pauseOverlay = document.getElementById('pauseOverlay');
+    const pauseRecommendations = document.getElementById('pauseRecommendations');
 
     // Global State
     let allFiles = [];
+    const thumbnailCache = {}; // FITUR BARU: Menyimpan gambar di RAM agar muncul instan saat Pause
     let currentHeroFile = null;
     let heroBlobUrl = null;
     let activeMainUrl = null;
     let activeSubtitleUrl = null;
+    let currentlyPlayingName = null;
     
-    // Auto-Play State
     let currentPlaylist = [];
     let currentPlayIndex = -1;
 
-    // Ambil Daftar Saya dari LocalStorage
     let myList = JSON.parse(localStorage.getItem('lokalflix_mylist')) || [];
 
-    // --- 1. PEMINDAIAN FOLDER & MULTI-KATEGORI ---
+    // --- 1. PEMINDAIAN FOLDER ---
     selectFolderBtn.addEventListener('click', () => folderInput.click());
 
     folderInput.addEventListener('change', async (event) => {
-        libraryContainer.innerHTML = ''; // Bersihkan layar
+        libraryContainer.innerHTML = ''; 
         if (heroBlobUrl) { URL.revokeObjectURL(heroBlobUrl); heroVideo.src = ""; }
         
         allFiles = Array.from(event.target.files).filter(f => f.type.startsWith('video/'));
         if (allFiles.length === 0) return alert('Tidak ada file video.');
 
-        // Kelompokkan file berdasarkan Nama Folder Induknya (webkitRelativePath)
         const categories = {};
         allFiles.forEach(file => {
             const pathParts = file.webkitRelativePath.split('/');
-            // Jika video ada di dalam sub-folder, ambil nama sub-foldernya. Jika di luar, beri nama "Lainnya"
             const catName = pathParts.length > 2 ? pathParts[pathParts.length - 2] : "Video Tersimpan";
             if (!categories[catName]) categories[catName] = [];
             categories[catName].push(file);
         });
 
-        // Setup Hero Latar Belakang (Pilih random)
         updateHeroBackground(allFiles[Math.floor(Math.random() * allFiles.length)]);
 
-        // Bangun Baris "Lanjutkan Menonton"
         const continueWatchingFiles = allFiles.filter(file => {
             const saved = JSON.parse(localStorage.getItem(`loc_stream_${file.name}`));
-            return saved && saved.time > 30 && saved.time < (saved.dur - 10); // Sudah ditonton > 30 detik, tapi belum tamat
+            return saved && saved.time > 30 && saved.time < (saved.dur - 10); 
         });
-        if (continueWatchingFiles.length > 0) {
-            await createRow("Lanjutkan Menonton", continueWatchingFiles, true);
-        }
+        if (continueWatchingFiles.length > 0) await createRow("Lanjutkan Menonton", continueWatchingFiles);
 
-        // Bangun Baris "Daftar Saya"
         const myListFiles = allFiles.filter(file => myList.includes(file.name));
-        if (myListFiles.length > 0) {
-            await createRow("Daftar Saya", myListFiles, false);
-        }
+        if (myListFiles.length > 0) await createRow("Daftar Saya", myListFiles);
 
-        // Bangun Baris untuk setiap Kategori Folder
         for (const [catName, files] of Object.entries(categories)) {
-            await createRow(catName, files, false);
+            await createRow(catName, files);
         }
     });
 
-    // --- 2. ENGINE PEMBUAT BARIS (CAROUSEL) ---
-    async function createRow(title, filesArray, isContinueWatching) {
+    // --- 2. ENGINE PEMBUAT BARIS ---
+    async function createRow(title, filesArray) {
         const rowContainer = document.createElement('div');
         rowContainer.className = 'row-container';
         rowContainer.innerHTML = `
@@ -93,7 +84,6 @@ document.addEventListener('DOMContentLoaded', () => {
         rowContainer.querySelector('.nav-left').onclick = () => carousel.scrollBy({ left: -window.innerWidth/2, behavior: 'smooth' });
         rowContainer.querySelector('.nav-right').onclick = () => carousel.scrollBy({ left: window.innerWidth/2, behavior: 'smooth' });
 
-        // Ekstraksi Metadata & Render Kartu (Sekuensial agar memori aman)
         for (const file of filesArray) {
             const skeleton = document.createElement('div');
             skeleton.className = 'video-card loading';
@@ -101,18 +91,18 @@ document.addEventListener('DOMContentLoaded', () => {
             carousel.appendChild(skeleton);
 
             const meta = await extractVideoMetadata(file);
-            renderCard(file, skeleton, meta, filesArray); // Kirim filesArray sebagai Playlist untuk Auto-Play
+            if (meta.success) thumbnailCache[file.name] = meta.thumb; // Simpan gambar ke RAM
+            renderCard(file, skeleton, meta, filesArray); 
         }
     }
 
-    // --- 3. RENDERING KARTU & DAFTAR SAYA ---
+    // --- 3. RENDERING KARTU ---
     function renderCard(file, skeleton, meta, playlist) {
         skeleton.classList.remove('loading');
-        if (!meta.success) return skeleton.remove(); // Sembunyikan file yang korup/tidak didukung
+        if (!meta.success) return skeleton.remove();
 
         const isListed = myList.includes(file.name);
         const listIcon = isListed ? `<path d="M5 12l5 5L20 7" stroke-linecap="round" stroke-linejoin="round"/>` : `<line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line>`;
-        
         const saved = JSON.parse(localStorage.getItem(`loc_stream_${file.name}`));
         const pPercent = (saved && saved.dur > 0) ? (saved.time / saved.dur) * 100 : 0;
 
@@ -130,7 +120,6 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
 
-        // Logika Hover Ganti Hero
         let heroTimeout;
         skeleton.addEventListener('mouseenter', () => {
             clearTimeout(heroTimeout);
@@ -138,19 +127,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         skeleton.addEventListener('mouseleave', () => clearTimeout(heroTimeout));
 
-        // Buka Player saat diklik (Kirim playlist untuk Auto-Play Next)
         skeleton.querySelector('.thumbnail-container').addEventListener('click', () => openCinema(file, playlist));
-
-        // Logika Tombol Bookmark
         skeleton.querySelector('.btn-card-add').addEventListener('click', (e) => {
-            e.stopPropagation(); // Mencegah video terputar saat mengklik tombol
+            e.stopPropagation();
             toggleMyList(file.name);
-            // Refresh Visual Tombol Hero jika file yang sama sedang tampil
             if(currentHeroFile && currentHeroFile.name === file.name) updateHeroListBtnState();
         });
     }
 
-    // --- 4. ENGINE HERO BACKGROUND ---
+    // --- 4. ENGINE HERO ---
     function updateHeroBackground(file) {
         if (!file || (currentHeroFile && currentHeroFile.name === file.name)) return;
         currentHeroFile = file;
@@ -197,13 +182,15 @@ document.addEventListener('DOMContentLoaded', () => {
         updateHeroListBtnState();
     }
 
-    // --- 5. CINEMA PLAYER & AUTO-PLAY NEXT ---
+    // --- 5. CINEMA PLAYER ---
     function openCinema(file, playlist) {
         if (activeMainUrl) URL.revokeObjectURL(activeMainUrl);
         if (activeSubtitleUrl) URL.revokeObjectURL(activeSubtitleUrl);
         
-        mainPlayer.innerHTML = ''; // Hapus subtitle sebelumnya
+        mainPlayer.innerHTML = ''; 
+        pauseOverlay.classList.add('hidden'); // Sembunyikan menu pause saat awal buka
         
+        currentlyPlayingName = file.name;
         currentPlaylist = playlist;
         currentPlayIndex = playlist.findIndex(f => f.name === file.name);
 
@@ -219,17 +206,16 @@ document.addEventListener('DOMContentLoaded', () => {
         mainPlayer.play();
     }
 
-    // Fitur Binge-Watching: Otomatis putar episode/video selanjutnya
     mainPlayer.addEventListener('ended', () => {
         if (currentPlayIndex >= 0 && currentPlayIndex < currentPlaylist.length - 1) {
-            const nextFile = currentPlaylist[currentPlayIndex + 1];
-            openCinema(nextFile, currentPlaylist);
+            openCinema(currentPlaylist[currentPlayIndex + 1], currentPlaylist);
         } else {
-            closeCinemaBtn.click(); // Tutup jika sudah habis di kategori tersebut
+            closeCinemaBtn.click(); 
         }
     });
 
     closeCinemaBtn.addEventListener('click', () => {
+        pauseOverlay.classList.add('hidden');
         mainPlayer.pause();
         mainPlayer.src = ""; 
         cinemaOverlay.classList.add('hidden');
@@ -237,15 +223,61 @@ document.addEventListener('DOMContentLoaded', () => {
         heroVideo.play().catch(()=>{}); 
     });
 
-    // Tracking Progress via Timeupdate
     mainPlayer.addEventListener('timeupdate', () => {
-        if (currentPlayIndex === -1 || mainPlayer.duration === 0) return;
-        const currentFileName = currentPlaylist[currentPlayIndex].name;
-        localStorage.setItem(`loc_stream_${currentFileName}`, JSON.stringify({time: mainPlayer.currentTime, dur: mainPlayer.duration}));
+        if (!currentlyPlayingName || mainPlayer.duration === 0) return;
+        localStorage.setItem(`loc_stream_${currentlyPlayingName}`, JSON.stringify({time: mainPlayer.currentTime, dur: mainPlayer.duration}));
     });
 
-    // --- 6. DRAG & DROP SUBTITLE (.SRT / .VTT) ---
-    // Mencegah browser membuka file secara default
+    // --- 6. LOGIKA PAUSE MENU (FITUR BARU) ---
+    let pauseMenuTimeout;
+    
+    mainPlayer.addEventListener('pause', () => {
+        if (cinemaOverlay.classList.contains('hidden') || !activeMainUrl) return;
+
+        // Beri jeda 0.4 detik sebelum muncul agar transisinya elegan
+        clearTimeout(pauseMenuTimeout);
+        pauseMenuTimeout = setTimeout(() => {
+            if (mainPlayer.paused) showPauseRecommendations();
+        }, 400);
+    });
+
+    mainPlayer.addEventListener('play', () => {
+        clearTimeout(pauseMenuTimeout);
+        pauseOverlay.classList.add('hidden');
+    });
+
+    function showPauseRecommendations() {
+        // Ambil video lain yang sedang tidak diputar
+        const availableFiles = allFiles.filter(f => f.name !== currentlyPlayingName);
+        if (availableFiles.length === 0) return;
+
+        // Acak urutan dan ambil 5 teratas
+        const shuffled = availableFiles.sort(() => 0.5 - Math.random());
+        const selected = shuffled.slice(0, 5);
+
+        pauseRecommendations.innerHTML = '';
+        selected.forEach(file => {
+            const card = document.createElement('div');
+            card.className = 'pause-card';
+            const thumbSrc = thumbnailCache[file.name] || ''; 
+            const imgHTML = thumbSrc ? `<img src="${thumbSrc}">` : `<div style="height:100%; background:#333; display:flex; align-items:center; justify-content:center; color:#888;">Loading...</div>`;
+            
+            card.innerHTML = `
+                ${imgHTML}
+                <div class="title">${file.name.replace(/\.[^/.]+$/, "")}</div>
+            `;
+            
+            card.onclick = (e) => {
+                e.stopPropagation(); // Cegah player utama ikut terklik
+                openCinema(file, allFiles); // Langsung pindah muter video ini
+            };
+            pauseRecommendations.appendChild(card);
+        });
+
+        pauseOverlay.classList.remove('hidden');
+    }
+
+    // --- 7. DRAG & DROP SUBTITLE ---
     cinemaOverlay.addEventListener('dragover', (e) => { e.preventDefault(); subtitleDropzone.classList.remove('hidden'); });
     cinemaOverlay.addEventListener('dragleave', (e) => { e.preventDefault(); subtitleDropzone.classList.add('hidden'); });
     
@@ -257,17 +289,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!file || (!file.name.endsWith('.srt') && !file.name.endsWith('.vtt'))) return alert("Hanya mendukung file .srt atau .vtt");
 
         const text = await file.text();
-        // Konversi SRT ke VTT murni (Browser wajib butuh WEBVTT untuk tag track lokal)
         let vttText = text;
         if (file.name.endsWith('.srt')) {
-            vttText = 'WEBVTT\n\n' + text.replace(/(\d{2}:\d{2}:\d{2}),(\d{3})/g, '$1.$2'); // Ubah koma ke titik
+            vttText = 'WEBVTT\n\n' + text.replace(/(\d{2}:\d{2}:\d{2}),(\d{3})/g, '$1.$2'); 
         }
 
         const blob = new Blob([vttText], { type: 'text/vtt' });
         if (activeSubtitleUrl) URL.revokeObjectURL(activeSubtitleUrl);
         activeSubtitleUrl = URL.createObjectURL(blob);
 
-        // Hapus track lama jika ada
         mainPlayer.innerHTML = ''; 
         const track = document.createElement('track');
         track.kind = 'subtitles'; track.label = 'Indonesia'; track.srclang = 'id'; track.default = true;
@@ -277,7 +307,7 @@ document.addEventListener('DOMContentLoaded', () => {
         alert(`Subtitle "${file.name}" berhasil dimuat!`);
     });
 
-    // --- 7. HELPER FUNCTIONS ---
+    // --- 8. HELPER ---
     function extractVideoMetadata(file) {
         return new Promise((resolve) => {
             const video = document.createElement('video');
@@ -304,7 +334,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Hotkeys
     document.addEventListener('keydown', (e) => {
         if (cinemaOverlay.classList.contains('hidden')) return;
         if ([' ', 'ArrowRight', 'ArrowLeft', 'f', 'Escape'].includes(e.key)) e.preventDefault();
