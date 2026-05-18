@@ -113,3 +113,45 @@ body { background-color: var(--bg-dark); color: var(--text-main); overflow-x: hi
 }
 .subtitle-dropzone.hidden { display: none; }
 .subtitle-dropzone h2 { color: white; margin-top: 16px; font-weight: 400; }
+
+/* --- PAUSE OVERLAY RECOMMENDATIONS --- */
+.pause-overlay {
+    position: absolute; bottom: 60px; /* Berada di atas control bar bawaan player */
+    left: 0; width: 100%;
+    background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.6) 70%, transparent 100%);
+    padding: 60px 4% 20px 4%;
+    z-index: 10000;
+    display: flex; flex-direction: column; justify-content: flex-end;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    pointer-events: none; /* Memastikan klik area kosong tetap mengenai video */
+}
+
+.pause-overlay.hidden {
+    opacity: 0; transform: translateY(20px);
+}
+
+.pause-title {
+    color: white; font-size: 1.2rem; margin-bottom: 16px; font-weight: bold; 
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.8); pointer-events: auto;
+}
+
+.pause-recommendations {
+    display: flex; gap: 12px; overflow-x: auto; pointer-events: auto; /* Kartu bisa diklik */
+    padding-bottom: 10px;
+    -ms-overflow-style: none; scrollbar-width: none;
+}
+.pause-recommendations::-webkit-scrollbar { display: none; }
+
+.pause-card {
+    flex: 0 0 220px; cursor: pointer; border-radius: 6px; overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s; 
+    background: #181818; border: 2px solid transparent;
+}
+
+.pause-card:hover {
+    transform: scale(1.05) translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.8);
+    border-color: var(--cf-orange);
+}
+
+.pause-card img { width: 100%; aspect-ratio: 16/9; object-fit: cover; }
+.pause-card .title { padding: 10px; font-size: 13px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: white;}
