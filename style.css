@@ -1,0 +1,115 @@
+:root {
+    --bg-dark: #141414;
+    --cf-orange: #E50914;
+    --text-main: #FFFFFF;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+body { background-color: var(--bg-dark); color: var(--text-main); overflow-x: hidden; }
+
+/* NAVBAR */
+.header {
+    position: fixed; top: 0; left: 0; width: 100%;
+    padding: 20px 4%; background: linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%);
+    z-index: 100;
+}
+.header-content { display: flex; justify-content: space-between; align-items: center; }
+.logo { font-size: 28px; font-weight: 800; letter-spacing: -1px; color: var(--cf-orange); text-transform: uppercase; }
+.logo span { color: white; }
+.btn-primary {
+    background-color: var(--cf-orange); color: white; border: none;
+    padding: 8px 16px; border-radius: 4px; font-size: 14px; font-weight: bold; cursor: pointer;
+}
+
+/* HERO FULLSCREEN (PERBAIKAN UTAMA) */
+.hero-section {
+    position: relative; width: 100vw; height: 100vh; /* Memenuhi seluruh layar */
+    background-color: #000; overflow: hidden;
+}
+.hero-bg-video { width: 100%; height: 100%; object-fit: cover; opacity: 0.8; }
+.hero-vignette {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: linear-gradient(77deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 65%),
+                linear-gradient(to top, var(--bg-dark) 0%, rgba(20,20,20,0) 35%);
+}
+.hero-content { position: absolute; bottom: 30%; left: 4%; width: 50%; z-index: 10; }
+.hero-title { font-size: 3.5rem; font-weight: 800; text-shadow: 2px 2px 5px rgba(0,0,0,0.6); margin-bottom: 1rem; line-height: 1.1; }
+.hero-subtitle { font-size: 1.2rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.6); margin-bottom: 1.5rem; }
+
+/* Tombol Hero */
+.hero-actions { display: flex; gap: 12px; }
+.btn-play {
+    display: flex; align-items: center; gap: 8px; background-color: white; color: black;
+    border: none; padding: 10px 24px; border-radius: 4px; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: 0.2s;
+}
+.btn-play:hover { background-color: rgba(255,255,255,0.7); }
+.btn-list {
+    display: flex; align-items: center; gap: 8px; background-color: rgba(109, 109, 110, 0.7); color: white;
+    border: none; padding: 10px 24px; border-radius: 4px; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: 0.2s;
+}
+.btn-list:hover { background-color: rgba(109, 109, 110, 0.4); }
+
+/* MULTI-ROW LIBRARY */
+.library-section {
+    position: relative; z-index: 20;
+    margin-top: -25vh; /* Menarik baris ke atas video Hero */
+    padding-bottom: 100px;
+    /* Transisi mulus dari transparan ke solid untuk menutupi bagian bawah hero */
+    background: linear-gradient(to bottom, transparent 0%, var(--bg-dark) 200px, var(--bg-dark) 100%);
+    min-height: 50vh;
+}
+.row-container { margin-bottom: 40px; position: relative; }
+.row-title { font-size: 20px; font-weight: 600; margin-bottom: 14px; padding-left: 4%; }
+.carousel-wrapper { position: relative; display: flex; align-items: center; }
+
+/* Navigasi Carousel */
+.nav-btn {
+    position: absolute; z-index: 40; top: 0; bottom: 60px; width: 50px;
+    background: rgba(20,20,20,0.6); border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; opacity: 0; transition: 0.3s;
+}
+.carousel-wrapper:hover .nav-btn { opacity: 1; }
+.nav-btn:hover { background: rgba(20,20,20,0.9); }
+.nav-btn svg { width: 36px; height: 36px; transition: transform 0.2s; }
+.nav-btn:hover svg { transform: scale(1.2); }
+.nav-left { left: 0; border-radius: 0 4px 4px 0; }
+.nav-right { right: 0; border-radius: 4px 0 0 4px; }
+
+/* Kartu Video */
+.video-carousel {
+    display: flex; gap: 10px; overflow-x: auto; padding: 20px 4% 60px 4%;
+    scroll-behavior: smooth; scroll-snap-type: x mandatory; -ms-overflow-style: none; scrollbar-width: none;
+}
+.video-carousel::-webkit-scrollbar { display: none; }
+.video-card {
+    flex: 0 0 280px; scroll-snap-align: center; cursor: pointer;
+    border-radius: 4px; overflow: hidden; position: relative;
+    transition: transform 0.3s, box-shadow 0.3s; background-color: #222;
+}
+.video-card:hover { transform: scale(1.1) translateY(-10px); z-index: 30; box-shadow: 0 10px 20px rgba(0,0,0,0.8); }
+
+.thumbnail-container { width: 100%; aspect-ratio: 16 / 9; position: relative; }
+.thumbnail-container img { width: 100%; height: 100%; object-fit: cover; }
+.watch-progress-bar { position: absolute; bottom: 0; left: 0; height: 3.5px; background-color: var(--cf-orange); z-index: 4; }
+.duration-badge { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.8); font-size: 11px; padding: 2px 6px; border-radius: 3px; z-index: 4; }
+.video-info { padding: 10px; background-color: #181818; display: flex; justify-content: space-between; align-items: center;}
+.video-title { font-size: 14px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-grow: 1; }
+.btn-card-add { background: none; border: none; color: white; cursor: pointer; opacity: 0.6; transition: 0.2s; }
+.btn-card-add:hover { opacity: 1; transform: scale(1.1); color: var(--cf-orange); }
+
+/* CINEMA PLAYER & DROPZONE SUBTITLE */
+.cinema-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; opacity: 1; transition: opacity 0.3s ease; }
+.cinema-overlay.hidden { opacity: 0; pointer-events: none; }
+.main-player-video { width: 100%; height: 100%; outline: none; }
+.btn-close { position: absolute; top: 20px; right: 30px; background: rgba(0,0,0,0.5); border: none; border-radius: 50%; width: 50px; height: 50px; cursor: pointer; z-index: 10000; transition: 0.2s; }
+.btn-close:hover { transform: scale(1.1); background: rgba(0,0,0,0.8); }
+
+/* UI Drag & Drop Subtitle */
+.subtitle-dropzone {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.8); border: 4px dashed var(--cf-orange);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    z-index: 10001; pointer-events: none; /* Dikelola JS */
+}
+.subtitle-dropzone.hidden { display: none; }
+.subtitle-dropzone h2 { color: white; margin-top: 16px; font-weight: 400; }

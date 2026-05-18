@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LokalFlix Stream</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">LokalFlix<span>Stream</span></div>
+            <div class="actions">
+                <input type="file" id="folderInput" accept="video/*" webkitdirectory directory multiple hidden>
+                <button id="selectFolderBtn" class="btn-primary">Pilih Folder Media</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-layout">
+        <section class="hero-section" id="heroSection">
+            <video id="heroVideo" class="hero-bg-video" muted loop playsinline></video>
+            <div class="hero-vignette"></div>
+            <div class="hero-content">
+                <h1 id="heroTitle" class="hero-title">Selamat Datang di LokalFlix</h1>
+                <p id="heroSubtitle" class="hero-subtitle">Pilih folder media Anda untuk mulai memindai koleksi video lokal secara otomatis.</p>
+                <div class="hero-actions" style="display: none;" id="heroActionButtons">
+                    <button id="heroPlayBtn" class="btn-play">
+                        <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> Putar
+                    </button>
+                    <button id="heroListBtn" class="btn-list">
+                        <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="icon-plus"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> 
+                        <span id="heroListText">Daftar Saya</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section class="library-section" id="libraryContainer">
+            </section>
+    </main>
+
+    <div id="cinemaOverlay" class="cinema-overlay hidden">
+        <button id="closeCinemaBtn" class="btn-close" title="Tutup (Esc)">
+            <svg viewBox="0 0 24 24" width="32" height="32" stroke="white" stroke-width="2" fill="none"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+        <video id="mainPlayer" class="main-player-video" controls crossorigin="anonymous"></video>
+        
+        <div id="subtitleDropzone" class="subtitle-dropzone hidden">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+            <h2>Lepaskan file Subtitle (.srt / .vtt) di sini</h2>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
